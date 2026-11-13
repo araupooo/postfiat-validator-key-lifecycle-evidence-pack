@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PostFiat Ledger — Validator Key Lifecycle and Rotation Simulation</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 960px; margin: 2em auto; padding: 0 1em; color: #1a1a1a; line-height: 1.5; }
+  h1 { font-size: 1.6em; } h2 { font-size: 1.25em; margin-top: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .2em; }
+  table { border-collapse: collapse; width: 100%; margin: .6em 0; font-size: .92em; }
+  th, td { border: 1px solid #bbb; padding: .35em .5em; text-align: left; }
+  th { background: #eee; } td.num { text-align: right; }
+  code { background: #f2f2f2; padding: 0 .25em; }
+  .kpi { display: flex; gap: 1em; flex-wrap: wrap; }
+  .kpi div { border: 1px solid #bbb; padding: .6em .9em; min-width: 10em; }
+  .kpi b { font-size: 1.4em; display: block; }
+  .note { background: #fff8e1; border-left: 4px solid #c90; padding: .6em .9em; }
+</style>
+</head>
+<body>
+<h1>PostFiat Ledger — Validator Key Lifecycle and Rotation Simulation</h1>
+<p>A rotation-simulation harness and key-lifecycle documentation for the
+postfiatd validator set, grounded in the pinned source tree. The harness
+models the validator-set mechanics in that tree — validation quorum,
+amendment majority, manifest-based key rotation, and the ML-DSA migration
+path — and reports the states where signing continuity breaks.</p>
+
+<p>Codebase: postfiatd, commit
+<code>0085a1ff885d6a446369cf73a4430f75af22be55</code>
+("Merge pull request #50 from postfiatorg/hotfix/upstream-hardening-1.0.9").
+Harness: <code>rotation_sim.py</code> 1.0.0. Method: deterministic
+simulation (seed 20261113) of the mechanics in the pinned tree only — the
+ledger was <strong>not</strong> compiled or run (a full build is not
+feasible on the audit machine: no Conan, ~1&nbsp;GB RAM available). See
+<code>README.md</code> for reproduction steps and <code>assumptions.md</code>
+for everything the model assumes rather than verifies.</p>
+
+<h2>Headline figures (N=66 validators, 67% rule unless stated)</h2>
+<div class="kpi">
+  <div><b>45</b> validations needed for quorum (of 66)</div>
+  <div><b>45</b> minimum votes for an amendment majority</div>
+  <div><b>22</b> compromised validators break quorum</div>
+  <div><b>21</b> compromised validators still tolerated</div>
+  <div><b>14</b> compromised validators break quorum (80% rule)</div>
+  <div><b>22</b> hybrid-only validators lose old nodes' quorum</div>
+</div>
+
+<h2>Thresholds</h2>
+<p>Validation quorum is <code>max(ceil(N &times; fraction), ceil(N &times; 0.60))</code>
+(<code>ValidatorList::calculateQuorum</code>); the amendment majority is
+<code>votes &gt; floor(N &times; fraction)</code> with a 2-week hold
+(<code>AmendmentTable::computeThreshold / passes / doVoting</code>).
+postfiatd uses 67/100 for both; upstream rippled uses 80/100 for both
+(<code>SystemParameters.h:85</code>).</p>
+<table>
+<tr><th>Validators</th><th>Rule</th><th>Validation quorum</th><th>Amendment min votes</th><th>Max offline tolerated</th><th>Breaks at offline</th></tr>
+<tr><td class="num">16</td><td>postfiatd-67pct</td><td class="num">11</td><td class="num">11</td><td class="num">5</td><td class="num">6</td></tr><tr><td class="num">16</td><td>upstream-80pct</td><td class="num">13</td><td class="num">13</td><td class="num">3</td><td class="num">4</td></tr><tr><td class="num">25</td><td>postfiatd-67pct</td><td class="num">17</td><td class="num">17</td><td class="num">8</td><td class="num">9</td></tr><tr><td class="num">25</td><td>upstream-80pct</td><td class="num">20</td><td class="num">21</td><td class="num">5</td><td class="num">6</td></tr><tr><td class="num">53</td><td>postfiatd-67pct</td><td class="num">36</td><td class="num">36</td><td class="num">17</td><td class="num">18</td></tr><tr><td class="num">53</td><td>upstream-80pct</td><td class="num">43</td><td class="num">43</td><td class="num">10</td><td class="num">11</td></tr><tr><td class="num">66</td><td>postfiatd-67pct</td><td class="num">45</td><td class="num">45</td><td class="num">21</td><td class="num">22</td></tr><tr><td class="num">66</td><td>upstream-80pct</td><td class="num">53</td><td class="num">53</td><td class="num">13</td><td class="num">14</td></tr>
+</table>
+<p>Read the N=66 row as: with 66 validators, 45 validations close a ledger
+and 45 votes carry an amendment under the 67% rule; 21 validators can be
+offline or compromised at once and quorum still holds; the 22nd breaks it.
+Under the upstream 80% rule the same set tolerates only 13, breaking at 14.</p>
+
+<h2>Rotation schedule</h2>
+<p>Staggered rotation of the 66 validators over 56 simulated days
+(seed 20261113), in weekly batches of 9, with a 7-day
+overlap window and 0-day manifest propagation delay. Worst day:
+<b>0</b> validators without a trusted signing key. Quorum met
+every day under the 67% rule: <b>True</b>; under the 80% rule:
+<b>True</b>. Per-day state is in
+<code>results/rotation_schedule.csv</code>.</p>
+<h2>Stress variant: 2-day propagation delay, no overlap</h2><p>Same set and seed, run with <code>--propagation-delay-days 2 --overlap-days 0</code> (<code>results/stress/</code>). Each weekly batch of 9 validators spends 2 days without a network-wide trusted key, so up to <b>9</b> validators are without a trusted key on the worst day; quorum is still met every day under both rules (57 signing validators vs quorum 45 at 67%, 53 at 80%).</p>
+
+<h2>Mid-rotation failure</h2>
+<p>One validator's new manifest never propagates and its old key is already
+superseded: <b>7 days</b> without a trusted signing key (recovery
+after 7 days by republishing a working manifest). Quorum still
+holds under both rules (margins 20 at 67%, 12 at 80%).
+Fleet variant: quorum breaks when <b>22</b> validators fail at once
+(67%) or <b>14</b> (80%).</p>
+
+<h2>Compromise sweep</h2>
+<p>Compromised validators lose their votes (revoked, or voting
+adversarially). Full sweep in <code>results/compromise_sweep.csv</code>:
+quorum is reachable while <b>21</b> or fewer validators are
+compromised (67% rule) and breaks at <b>22</b>; at the 80% rule
+the figures are 13 / 14. The same break points bound
+amendment majorities, since the amendment minimum (45) equals the
+validation quorum (45) at N=66.</p>
+
+<h2>Mixed classical / post-quantum network</h2>
+<p>Old nodes verify only the classical half of a hybrid signature, so a
+validator that presents no classical signature is unverifiable to them.
+Old nodes lose quorum once <b>22</b> validators are hybrid-only
+(67% rule) or <b>14</b> (80% rule). Dual-signed validators count
+for old and new nodes alike; only hybrid-only validators shrink the old
+nodes' verifiable set. Full sweep in
+<code>results/mixed_network.csv</code>.</p>
+
+<h2>Coordinated whole-set rotation</h2>
+<p>If every validator rotates on the same day, quorum is lost for
+<code>max(0, propagation_delay - overlap)</code> days: no loss at 0-day
+delay (minutes-scale propagation, consistent with the 5-minute
+validator-site refresh); 1 day lost at delay 1 / overlap 0; 2 days at
+delay 2 / overlap 0; 7 days at delay 7 / overlap 0. A 7-day overlap
+window absorbs even a 7-day delay. Grid in
+<code>results/coordinated_rotation.csv</code>.</p>
+
+<div class="note"><strong>Model, not measurement.</strong> These numbers
+come from the mechanics in the pinned source tree applied to a validator
+set of 66 (the count listed by the PostFiat testnet explorer on
+2026-11-13). They are not measurements of the live network. The
+assumptions below state what is verified from source and what is assumed.</div>
+
+<h2>Assumptions</h2>
+<ul>
+<li>Validator-set size N=66 is the number of validators listed by the PostFiat testnet explorer on 2026-11-13 (ledger ~8,016,789); it is a snapshot, not a protocol constant, and the set changes as validators join and leave.</li><li>The model counts a validator as signing only when it has a network-wide trusted signing key. A validator in manifest transition (new manifest published, not yet trusted by all peers) counts as NOT signing — a conservative choice.</li><li>The pinned code has no dual-signing state: a manifest carries exactly one signing key. The &#x27;overlap window&#x27; in the schedule is an operational procedure (publish the new manifest early, activate late), not a protocol feature; see assumptions.md.</li><li>UNL update propagation is modelled as a single delay in whole days. The code&#x27;s validator-site refresh is 5 minutes by default, so the baseline delay of 0 days (minutes-scale) is the realistic case; multi-day delays are stress cases.</li><li>Compromised validators are modelled as losing their votes entirely (revoked or voting adversarially). The model does not simulate double-signing, equivocation detection, or negative-UNL exclusion dynamics.</li><li>Amendment votes expire 24 hours after a validator&#x27;s last validation; the model does not simulate vote expiry, because the modelled outages are counted in whole days and any validator offline for a full day has no live vote anyway.</li>
+</ul>
+
+<h2>Files</h2>
+<ul>
+<li><code>rotation_sim.py</code> — the harness (Python 3, standard library only)</li>
+<li><code>results/simulation_summary.json</code> — every scenario result, config, assumptions</li>
+<li><code>results/threshold_table.csv</code>, <code>results/compromise_sweep.csv</code>, <code>results/mixed_network.csv</code>, <code>results/rotation_schedule.csv</code>, <code>results/coordinated_rotation.csv</code> — machine-readable outputs</li>
+<li><code>results/summary.txt</code> — human-readable summary</li>
+<li><code>key_lifecycle.md</code> — generation, custody, rotation procedure, ML-DSA migration path</li>
+<li><code>compromise_runbook.md</code> — detection, containment, recovery for a suspected key compromise</li>
+<li><code>assumptions.md</code> — verified-vs-assumed register</li>
+<li><code>sources.md</code> — primary sources for every standard-derived claim</li>
+<li><code>README.md</code> — reproduction steps</li>
+</ul>
+</body>
+</html>
