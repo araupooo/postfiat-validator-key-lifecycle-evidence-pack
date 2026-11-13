@@ -1,0 +1,160 @@
+{
+  "harness": "rotation_sim.py",
+  "harness_version": "1.0.0",
+  "pinned_commit": "0085a1ff885d6a446369cf73a4430f75af22be55",
+  "tree_checked": "/home/hatch/workspace/postfiatd-amendment/worktree-0085a1ff",
+  "tree_head_commit": "0085a1ff885d6a446369cf73a4430f75af22be55",
+  "tree_matches_pinned_commit": true,
+  "config": {
+    "validators_n": 66,
+    "seed": 20261113,
+    "horizon_days": 56,
+    "sim_start_date": "2026-11-13",
+    "overlap_days_planned": 7,
+    "propagation_delay_days": 0,
+    "recovery_days": 7
+  },
+  "thresholds": {
+    "postfiatd_validation_quorum": 45,
+    "postfiatd_amendment_min_votes": 45,
+    "upstream_validation_quorum": 53,
+    "upstream_amendment_min_votes": 53,
+    "note": "postfiatd uses 67/100 for both the validation quorum and the amendment majority; upstream rippled uses 80/100 for both."
+  },
+  "threshold_table": [
+    {
+      "validators_n": 16,
+      "rule": "postfiatd-67pct",
+      "validation_quorum": 11,
+      "amendment_min_votes": 11,
+      "max_offline_tolerated": 5,
+      "break_at_offline": 6,
+      "max_byzantine_tolerated": 5
+    },
+    {
+      "validators_n": 16,
+      "rule": "upstream-80pct",
+      "validation_quorum": 13,
+      "amendment_min_votes": 13,
+      "max_offline_tolerated": 3,
+      "break_at_offline": 4,
+      "max_byzantine_tolerated": 3
+    },
+    {
+      "validators_n": 25,
+      "rule": "postfiatd-67pct",
+      "validation_quorum": 17,
+      "amendment_min_votes": 17,
+      "max_offline_tolerated": 8,
+      "break_at_offline": 9,
+      "max_byzantine_tolerated": 8
+    },
+    {
+      "validators_n": 25,
+      "rule": "upstream-80pct",
+      "validation_quorum": 20,
+      "amendment_min_votes": 21,
+      "max_offline_tolerated": 5,
+      "break_at_offline": 6,
+      "max_byzantine_tolerated": 5
+    },
+    {
+      "validators_n": 53,
+      "rule": "postfiatd-67pct",
+      "validation_quorum": 36,
+      "amendment_min_votes": 36,
+      "max_offline_tolerated": 17,
+      "break_at_offline": 18,
+      "max_byzantine_tolerated": 17
+    },
+    {
+      "validators_n": 53,
+      "rule": "upstream-80pct",
+      "validation_quorum": 43,
+      "amendment_min_votes": 43,
+      "max_offline_tolerated": 10,
+      "break_at_offline": 11,
+      "max_byzantine_tolerated": 10
+    },
+    {
+      "validators_n": 66,
+      "rule": "postfiatd-67pct",
+      "validation_quorum": 45,
+      "amendment_min_votes": 45,
+      "max_offline_tolerated": 21,
+      "break_at_offline": 22,
+      "max_byzantine_tolerated": 21
+    },
+    {
+      "validators_n": 66,
+      "rule": "upstream-80pct",
+      "validation_quorum": 53,
+      "amendment_min_votes": 53,
+      "max_offline_tolerated": 13,
+      "break_at_offline": 14,
+      "max_byzantine_tolerated": 13
+    }
+  ],
+  "rotation_schedule": {
+    "validators_n": 66,
+    "horizon_days": 56,
+    "weekly_batch_size": 9,
+    "overlap_days_planned": 7,
+    "propagation_delay_days": 0,
+    "transition_gap_days": 0,
+    "max_validators_without_trusted_key": 0,
+    "quorum_breach_days_67pct": [],
+    "quorum_breach_days_80pct": [],
+    "quorum_met_every_day_67pct": true,
+    "quorum_met_every_day_80pct": true
+  },
+  "rotation_failure_single": {
+    "failed_validator_index": 8,
+    "activation_day": 7,
+    "recovery_days": 7,
+    "days_without_trusted_key": 7,
+    "offline_day_range": [
+      7,
+      13
+    ],
+    "signing_validators_during_outage": 65,
+    "quorum_met_67pct_during_outage": true,
+    "quorum_met_80pct_during_outage": true,
+    "quorum_margin_67pct": 20,
+    "quorum_margin_80pct": 12
+  },
+  "rotation_failure_fleet": {
+    "max_simultaneous_failures_tolerated_67pct": 21,
+    "breaks_quorum_at_failures_67pct": 22,
+    "max_simultaneous_failures_tolerated_80pct": 13,
+    "breaks_quorum_at_failures_80pct": 14
+  },
+  "compromise": {
+    "validators_n": 66,
+    "break_at_compromised_67pct": 22,
+    "break_at_compromised_80pct": 14,
+    "max_compromised_tolerated_67pct": 21,
+    "max_compromised_tolerated_80pct": 13,
+    "byzantine_bound_note": "With a 67% quorum the fork-safety bound in the quorum comment allows t <= 0.33*N Byzantine validators; liveness (quorum) breaks at the same k as the table's break point."
+  },
+  "mixed_network": {
+    "validators_n": 66,
+    "max_hybrid_only_tolerated_67pct": 21,
+    "old_nodes_lose_quorum_at_hybrid_only_67pct": 22,
+    "max_hybrid_only_tolerated_80pct": 13,
+    "old_nodes_lose_quorum_at_hybrid_only_80pct": 14,
+    "note": "Dual-signed (hybrid) validators count for old and new nodes alike; only hybrid-ONLY validators shrink the old nodes' verifiable set."
+  },
+  "coordinated_rotation": {
+    "validators_n": 66,
+    "note": "With delay 0 (minutes-scale propagation, consistent with the 5-minute validator-site refresh) there is no quorum loss even for a same-day whole-set rotation. Loss appears only when propagation delay exceeds the overlap (pre-publication) window."
+  },
+  "assumptions": [
+    "Validator-set size N=66 is the number of validators listed by the PostFiat testnet explorer on 2026-11-13 (ledger ~8,016,789); it is a snapshot, not a protocol constant, and the set changes as validators join and leave.",
+    "The model counts a validator as signing only when it has a network-wide trusted signing key. A validator in manifest transition (new manifest published, not yet trusted by all peers) counts as NOT signing \u2014 a conservative choice.",
+    "The pinned code has no dual-signing state: a manifest carries exactly one signing key. The 'overlap window' in the schedule is an operational procedure (publish the new manifest early, activate late), not a protocol feature; see assumptions.md.",
+    "UNL update propagation is modelled as a single delay in whole days. The code's validator-site refresh is 5 minutes by default, so the baseline delay of 0 days (minutes-scale) is the realistic case; multi-day delays are stress cases.",
+    "Compromised validators are modelled as losing their votes entirely (revoked or voting adversarially). The model does not simulate double-signing, equivocation detection, or negative-UNL exclusion dynamics.",
+    "Amendment votes expire 24 hours after a validator's last validation; the model does not simulate vote expiry, because the modelled outages are counted in whole days and any validator offline for a full day has no live vote anyway."
+  ]
+}

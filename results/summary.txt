@@ -1,0 +1,18 @@
+Validator key rotation / compromise simulation
+postfiatd commit 0085a1ff885d6a446369cf73a4430f75af22be55
+Validators modelled: N=66 (seed 20261113, 56 simulated days from 2026-11-13)
+Tree HEAD matches pinned commit: True
+
+Thresholds (N=66): validation quorum 67% = 45, amendment min votes 67% = 45; upstream 80%: quorum 53, amendment min votes 53.
+
+Compromise: quorum breaks at 22 compromised validators (67% rule) and at 14 (80% rule); 21 / 13 compromised are still tolerated.
+
+Staggered rotation (66 validators over 56 days, propagation delay 0 days, overlap window 7 days): max validators without a trusted key on any day = 0; quorum met every day under the 67% rule: True; under the 80% rule: True.
+
+Mid-rotation failure (one validator, new manifest never trusted, recovery after 7 days): 7 days without a trusted key; quorum still met under both rules (margins 20 at 67%, 12 at 80%). Fleet variant: quorum breaks when 22 validators fail at once (67%) or 14 (80%).
+
+Mixed network: old nodes lose quorum once 22 validators are hybrid-only (67% rule) or 14 (80% rule). Dual-signed validators do not shrink the old nodes' verifiable set.
+
+Coordinated whole-set rotation: no quorum loss when propagation delay is 0 days; loss lasts max(0, delay - overlap) days otherwise — see coordinated_rotation.csv.
+
+This is a model of the mechanics in the pinned source tree, not a measurement of the live network. Assumptions are listed in simulation_summary.json and assumptions.md.

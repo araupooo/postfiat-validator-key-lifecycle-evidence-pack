@@ -1,0 +1,9 @@
+validators_n,rule,validation_quorum,amendment_min_votes,max_offline_tolerated,break_at_offline,max_byzantine_tolerated
+16,postfiatd-67pct,11,11,5,6,5
+16,upstream-80pct,13,13,3,4,3
+25,postfiatd-67pct,17,17,8,9,8
+25,upstream-80pct,20,21,5,6,5
+53,postfiatd-67pct,36,36,17,18,17
+53,upstream-80pct,43,43,10,11,10
+66,postfiatd-67pct,45,45,21,22,21
+66,upstream-80pct,53,53,13,14,13
